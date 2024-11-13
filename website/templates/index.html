@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posture Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #video-container {
+            margin-top: 20px;
+            display: inline-block;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 10px;
+            background-color: #fff;
+        }
+        #video {
+            width: 100%;
+            height: auto;
+        }
+        .alert {
+            background-color: #f9c2c2;
+            padding: 15px;
+            margin: 15px;
+            border-radius: 5px;
+            border: 1px solid #f5c2c2;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Posture Monitoring</h1>
+        <p>Keep your posture straight while working with your laptop. This website monitors your posture and alerts you when you're slouching.</p>
+
+        <button id="startBtn" onclick="startMonitoring()">Start Monitoring</button>
+        <button id="stopBtn" onclick="stopMonitoring()" disabled>Stop Monitoring</button>
+
+        <div id="alertMessage" class="alert" style="display: none;">Accessing your camera...</div>
+
+        <div id="video-container">
+            <video id="video" autoplay></video>
+        </div>
+
+    </div>
+
+    <script>
+        let videoElement = document.getElementById("video");
+        let startButton = document.getElementById("startBtn");
+        let stopButton = document.getElementById("stopBtn");
+        let alertMessage = document.getElementById("alertMessage");
+
+        let mediaStream = null;
+
+        // Start monitoring (Request camera access)
+        function startMonitoring() {
+            alertMessage.style.display = "block"; // Show alert that camera is being accessed
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    // Set the video element's source to the stream
+                    mediaStream = stream;
+                    videoElement.srcObject = stream;
+
+                    // Enable stop button
+                    startButton.disabled = true;
+                    stopButton.disabled = false;
+
+                    // Optionally send a request to Flask to start monitoring
+                    fetch('/start_monitoring', {
+                        method: 'POST'
+                    });
+
+                    alertMessage.style.display = "none"; // Hide alert once camera is on
+                })
+                .catch(error => {
+                    alertMessage.style.display = "none"; // Hide alert if camera access fails
+                    alert("Camera access denied or not available.");
+                });
+        }
+
+        // Stop monitoring (Stop camera stream)
+        function stopMonitoring() {
+            if (mediaStream) {
+                let tracks = mediaStream.getTracks();
+                tracks.forEach(track => track.stop()); // Stop all tracks (video, audio, etc.)
+                videoElement.srcObject = null;
+            }
+
+            startButton.disabled = false;
+            stopButton.disabled = true;
+
+            // Optionally send a request to Flask to stop monitoring
+            fetch('/stop_monitoring', {
+                method: 'POST'
+            });
+        }
+    </script>
+</body>
+</html>

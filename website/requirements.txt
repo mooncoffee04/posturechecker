@@ -1,0 +1,7 @@
+gradio
+mediapipe
+joblib
+pygame
+opencv-python-headless  # This is required for OpenCV to work on servers without GUI
+pandas
+scikit-learn
